@@ -42,11 +42,13 @@ function showTraffic(openNow){
  const googleMode=(mode.value==='walking'||mode.value==='bicycling')?mode.value:'driving';
  const url='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(origin)+'&destination='+encodeURIComponent(destination)+'&travelmode='+googleMode;
  openMap.href=url;
- const embedUrl='https://www.google.com/maps?output=embed&saddr='+encodeURIComponent(origin)+'&daddr='+encodeURIComponent(destination)+'&dirflg='+(googleMode==='walking'?'w':googleMode==='bicycling'?'b':'d');
+ const embedUrl='https://www.google.com/maps?output=embed&saddr='+encodeURIComponent(origin)+'&daddr='+encodeURIComponent(destination)+'&dirflg='+(googleMode==='walking'?'w':googleMode==='bicycling'?'b':'d')+'&layer=t';
  routeMap.src=embedUrl;mapWrap.style.display='block';
  const names={walking:'Walk',bicycling:'Cycling','two-wheeler':'2-wheeler / Bike',driving:'Car',autorickshaw:'Auto-rickshaw'};
  document.getElementById('routeLabel').textContent=a+' → '+b+' · '+names[mode.value];
- traffic.style.display='block';\n cabBooking.style.display='block';\n document.getElementById('cabRouteLabel').textContent='Pickup: '+a+' · Drop-off: '+b;
+ traffic.style.display='block';
+ cabBooking.style.display='block';
+ document.getElementById('cabRouteLabel').textContent='Pickup: '+a+' · Drop-off: '+b;
  status.textContent='Your route map is displayed below. Open Google Maps for the live traffic overlay and current congestion.';
  history.replaceState(null,'','?from='+encodeURIComponent(a)+'&to='+encodeURIComponent(b)+'&mode='+encodeURIComponent(mode.value));
  if(openNow)window.open(url,'_blank','noopener');
