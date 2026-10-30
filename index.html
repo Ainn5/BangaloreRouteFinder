@@ -11,7 +11,7 @@
 </style>
 </head>
 <body>
-<header class="top"><h1>Bangalore Route Finder</h1><p>Enter two places in Bengaluru to compare walking, cycling, two-wheeler and car routes.</p></header>
+<header class="top"><h1>Bangalore Route Finder</h1><p>Enter two Bengaluru places to compare walking, cycling, two-wheeler, car and auto routes.</p></header>
 <main class="wrap">
 <section class="panel">
 <form id="routeForm">
@@ -26,7 +26,7 @@
 <div class="results" id="results" aria-live="polite"></div>
 <div class="links" id="links"></div>
 <div class="mapbox"><div id="map" aria-label="Route map"></div></div><section class="traffic-panel" aria-live="polite"><div><strong>Live traffic status</strong><p id="trafficNote">Open Google Maps to view current traffic conditions around Bengaluru. Traffic coverage and refresh frequency depend on Google Maps.</p></div><a class="traffic-link" id="trafficLink" href="https://www.google.com/maps/@12.9716,77.5946,12z/data=!5m1!1e1" target="_blank" rel="noopener noreferrer">View live traffic ↗</a></section>
-<p class="hint">Routes and estimates are supplied by OpenStreetMap-based public services. Actual travel time varies with traffic, signals, road closures and weather. The distance/time estimates on this page are not traffic-adjusted. Use the Live traffic status link to view current traffic in Google Maps. Two-wheeler estimates use a road route as an approximation.</p>
+<p class="hint">Routes and estimates are supplied by OpenStreetMap-based public services. Actual travel time varies with traffic, signals, road closures and weather. The distance/time estimates on this page are not traffic-adjusted. Use the Live traffic status link to view current traffic in Google Maps. Two-wheeler and auto estimates use a car-road routing profile as an approximation; Google Maps links open driving directions for these modes.</p>
 </section>
 </main>
 <footer>Page Owner: Ainn · Works on modern mobile and desktop browsers</footer>
@@ -40,18 +40,22 @@ const modes=[
  {id:'walk',name:'Walking',profile:'foot',service:'https://routing.openstreetmap.de/routed-foot/route/v1/driving/'},
  {id:'cycle',name:'Cycling',profile:'bike',service:'https://routing.openstreetmap.de/routed-bike/route/v1/driving/'},
  {id:'two',name:'Two-wheeler',profile:'car',service:'https://routing.openstreetmap.de/routed-car/route/v1/driving/'},
- {id:'car',name:'Car',profile:'car',service:'https://routing.openstreetmap.de/routed-car/route/v1/driving/'}
+ {id:'car',name:'Car',profile:'car',service:'https://routing.openstreetmap.de/routed-car/route/v1/driving/'},
+ {id:'auto',name:'Auto',profile:'car',service:'https://routing.openstreetmap.de/routed-car/route/v1/driving/'}
 ];
 function clearMap(){routeLayers.forEach(x=>map.removeLayer(x));markers.forEach(x=>map.removeLayer(x));routeLayers=[];markers=[]}
 async function geocode(q){const url='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=in&q='+encodeURIComponent(q+', Bengaluru, Karnataka, India');const r=await fetch(url,{headers:{'Accept':'application/json'}});if(!r.ok)throw Error('Place search is temporarily unavailable.');const a=await r.json();if(!a.length)throw Error('Could not find “'+q+'”. Try adding a nearby landmark or area.');return {lat:+a[0].lat,lon:+a[0].lon,label:a[0].display_name}}
 async function getRoute(mode,a,b){const url=mode.service+a.lon+','+a.lat+';'+b.lon+','+b.lat+'?overview=full&geometries=geojson&steps=false';const r=await fetch(url);if(!r.ok)throw Error('Route service returned '+r.status);const j=await r.json();if(j.code!=='Ok'||!j.routes||!j.routes.length)throw Error('No route returned');return j.routes[0]}
 function fmtDistance(m){return m>=1000?(m/1000).toFixed(1)+' km':Math.round(m)+' m'}
 function fmtTime(s){const min=Math.round(s/60);if(min<60)return min+' min';return Math.floor(min/60)+' hr '+(min%60)+' min'}
-function googleLink(a,b,mode){const m={walk:'walking',cycle:'bicycling',two:'two-wheeler',car:'driving'}[mode.id];return 'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(a.label)+'&destination='+encodeURIComponent(b.label)+'&travelmode='+m}
+function googleLink(a,b,mode){const m={walk:'walking',cycle:'bicycling',two:'driving',car:'driving',auto:'driving'}[mode.id];return 'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(a.label)+'&destination='+encodeURIComponent(b.label)+'&travelmode='+m}
 $('routeForm').addEventListener('submit',async e=>{e.preventDefault();const from=$('from').value.trim(),to=$('to').value.trim();if(!from||!to)return;const btn=$('go');btn.disabled=true;btn.textContent='Finding…';$('status').textContent='Finding both places in Bengaluru…';$('results').innerHTML='';$('links').innerHTML='';clearMap();try{
  const [a,b]=await Promise.all([geocode(from),geocode(to)]);
  markers.push(L.marker([a.lat,a.lon]).addTo(map).bindPopup('From: '+a.label),L.marker([b.lat,b.lon]).addTo(map).bindPopup('To: '+b.label));
- map.fitBounds([[a.lat,a.lon],[b.lat,b.lon]],{padding:[35,35]});\n const midLat=(a.lat+b.lat)/2,midLon=(a.lon+b.lon)/2;\n $('trafficLink').href='https://www.google.com/maps/@'+midLat+','+midLon+',13z/data=!5m1!1e1';\n $('trafficNote').textContent='Showing a live-traffic map centered between '+from+' and '+to+'. Traffic colours and updates are provided by Google Maps.';
+ map.fitBounds([[a.lat,a.lon],[b.lat,b.lon]],{padding:[35,35]});
+ const midLat=(a.lat+b.lat)/2,midLon=(a.lon+b.lon)/2;
+ $('trafficLink').href='https://www.google.com/maps/@'+midLat+','+midLon+',13z/data=!5m1!1e1';
+ $('trafficNote').textContent='Showing a live-traffic map centered between '+from+' and '+to+'. Traffic colours and updates are provided by Google Maps.';
  $('status').textContent='Calculating routes for all four travel modes…';
  const settled=await Promise.all(modes.map(async mode=>{try{return {mode,route:await getRoute(mode,a,b)}}catch(error){return {mode,error}}}));
  const colors=['#25834a','#2878c7','#d17a16','#9b55b5'];
@@ -62,6 +66,11 @@ $('routeForm').addEventListener('submit',async e=>{e.preventDefault();const from
  const failures=settled.filter(x=>x.error).length;
  $('status').textContent=failures?('Routes loaded with '+failures+' mode(s) unavailable. Google Maps links are provided below.'): 'All route estimates loaded. Select a Google Maps link for turn-by-turn navigation.';
  }catch(err){$('status').textContent=err.message+' You can also open Google Maps and enter the two places.';}finally{btn.disabled=false;btn.textContent='Find routes';}});
+// Support shared links such as ?from=HSR+Layout&to=Commercial+Street.
+const params=new URLSearchParams(location.search);
+if(params.has('from')) $('from').value=params.get('from');
+if(params.has('to')) $('to').value=params.get('to');
+if(params.get('from') && params.get('to')) $('routeForm').requestSubmit();
 </script>
 </body>
 </html>
